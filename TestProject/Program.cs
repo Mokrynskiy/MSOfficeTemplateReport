@@ -7,7 +7,7 @@ Header header = new()
     TitleC = @"Заголовок3",
     Positions = new()
     {
-        new() {PropA = "1.1", PropB = "1.2", PropC = "1.3"},
+        new() {PropA = "1.1", PropB = "1.2", PropC = "<HTML lang=\"ru\"><HEAD><meta charset=\"utf-8\"/></HEAD><BODY><DIV style=\"color:red\"> <b><u>2</u></b> наб., сер.2738, годен до 12.07.24, 21.31%; </DIV><DIV style=\"color:red\"> <b><u>16</u></b> наб., сер.2821, годен до 17.11.24, 56.28%; </DIV></BODY></HTML>"},
         new() {PropA = "2.1", PropB = "2.2", PropC = "2.3"},
         new() {PropA = "3.1", PropB = "3.2", PropC = "<HTML lang=\"ru\"><HEAD><meta charset=\"utf-8\"/></HEAD><BODY><DIV style=\"color:red\"> <b><u>2</u></b> наб., сер.2738, годен до 12.07.24, 21.31%; </DIV><DIV style=\"color:red\"> <b><u>16</u></b> наб., сер.2821, годен до 17.11.24, 56.28%; </DIV></BODY></HTML>"}
     },

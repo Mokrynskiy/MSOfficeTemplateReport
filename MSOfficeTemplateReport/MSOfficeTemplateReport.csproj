@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Title>MSOfficeTemplateReport</Title>
+    <Authors>Aleksandr Mokrinskiy</Authors>
+    <Company>Vector-Best</Company>
+    <Product>MSOfficeTemplateReport</Product>
+    <Description>Создание отчетов по шаблонам документов MSOffice</Description>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>

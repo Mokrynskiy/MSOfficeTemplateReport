@@ -182,7 +182,7 @@ namespace WordTemplateReport.WordReport
                                                 {
                                                     if (str.Contains("rtf1"))
                                                     {
-                                                        string id = name + i.ToString();
+                                                        string id = name + (new Random(10000000).Next());
                                                         using (MemoryStream sourceStream = new MemoryStream(Encoding.ASCII.GetBytes(str)))
                                                             _document.MainDocumentPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Rtf, id).FeedData((Stream)sourceStream);
                                                         txt.InsertAfterSelf<AltChunk>(new AltChunk()
@@ -193,17 +193,13 @@ namespace WordTemplateReport.WordReport
                                                     }
                                                     else if (str.Contains("<HTML"))
                                                     {
-                                                        string id = name + i.ToString();
+                                                        string id = name + (new Random(10000000).Next());
                                                         using (MemoryStream sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(str)))
                                                             _document.MainDocumentPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, id).FeedData((Stream)sourceStream);
                                                         AltChunk newElement2 = new AltChunk();
                                                         newElement2.Id = (StringValue)id;
                                                         txt.InsertAfterSelf<AltChunk>(newElement2);
                                                         txt.Remove();
-                                                        IEnumerable<Break> b = newElement2.Parent.Descendants<Break>();
-                                                        Console.WriteLine(b.Count<Break>());
-                                                        if (b.Any<Break>())
-                                                            b.Last<Break>().Remove();
                                                     }
                                                     else
                                                         txt.Text = txt.Text.Replace(match.ToString(), str);
@@ -221,12 +217,36 @@ namespace WordTemplateReport.WordReport
                                     foreach (object match in this._tagRegex.Matches(txt.Text))
                                     {
                                         string[] source5 = match.ToString().Replace("{", "").Replace("}", "").Split('.');
-                                        if (((IEnumerable<string>)source5).Count<string>() == 2 && !(source5[0] != "Item"))
+                                        if (((IEnumerable<string>)source5).Count<string>() == 2 && source5[0] == "Item")
                                         {
                                             string name = source5[1];
                                             string newValue = listIndex.GetType().GetProperty(name)?.GetValue(listIndex)?.ToString();
                                             if (newValue != null)
-                                                txt.Text = txt.Text.Replace(match.ToString(), newValue);
+                                            {
+                                                if (newValue.Contains("rtf1"))
+                                                {
+                                                    string id = name + +(new Random(10000000).Next());
+                                                    using (MemoryStream sourceStream = new MemoryStream(Encoding.ASCII.GetBytes(newValue)))
+                                                        _document.MainDocumentPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Rtf, id).FeedData((Stream)sourceStream);
+                                                    txt.InsertAfterSelf<AltChunk>(new AltChunk()
+                                                    {
+                                                        Id = (StringValue)id
+                                                    });
+                                                    txt.Text = txt.Text.Replace(match.ToString(), "");
+                                                }
+                                                else if (newValue.Contains("<HTML"))
+                                                {
+                                                    string id = name + +(new Random(10000000).Next());
+                                                    using (MemoryStream sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(newValue)))
+                                                        _document.MainDocumentPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, id).FeedData((Stream)sourceStream);
+                                                    AltChunk newElement2 = new AltChunk();
+                                                    newElement2.Id = (StringValue)id;
+                                                    txt.InsertAfterSelf<AltChunk>(newElement2);
+                                                    txt.Remove();
+                                                }
+                                                else
+                                                    txt.Text = txt.Text.Replace(match.ToString(), newValue);
+                                            }
                                         }
                                     }
                                 }
