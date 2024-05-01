@@ -82,6 +82,7 @@ namespace WordTemplateReport.WordReport
         }
         private void FillText (IEnumerable<Text> text)
         {
+            var rnd = new Random();
             foreach (var txt in text)
             {
                 if (_regex.IsMatch(txt.Text))
@@ -103,7 +104,7 @@ namespace WordTemplateReport.WordReport
                                     {
                                         if (str.Contains("rtf1"))
                                         {
-                                            string id = name + (new Random(1000000).Next());
+                                            string id = name + rnd.Next(1000000);
                                             using (MemoryStream sourceStream = new MemoryStream(Encoding.ASCII.GetBytes(str)))
                                                 _document.MainDocumentPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Rtf, id).FeedData((Stream)sourceStream);
                                             txt.InsertAfterSelf<AltChunk>(new AltChunk()
@@ -114,7 +115,7 @@ namespace WordTemplateReport.WordReport
                                         }
                                         else if (str.Contains("<HTML"))
                                         {
-                                            string id = name + (new Random(1000000).Next());
+                                            string id = name + rnd.Next(1000000);
                                             using (MemoryStream sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(str)))
                                                 _document.MainDocumentPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, id).FeedData((Stream)sourceStream);
                                             txt.InsertAfterSelf<AltChunk>(new AltChunk()
@@ -137,6 +138,7 @@ namespace WordTemplateReport.WordReport
         }
         private void FillTables(IEnumerable<TableProperties> tables)
         {
+            var rnd = new Random();
             foreach (TableProperties table in tables)
             {
                 string tableCaption = table.TableCaption?.Val?.ToString();
@@ -182,7 +184,7 @@ namespace WordTemplateReport.WordReport
                                                 {
                                                     if (str.Contains("rtf1"))
                                                     {
-                                                        string id = name + (new Random(10000000).Next());
+                                                        string id = name + rnd.Next(1000000);
                                                         using (MemoryStream sourceStream = new MemoryStream(Encoding.ASCII.GetBytes(str)))
                                                             _document.MainDocumentPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Rtf, id).FeedData((Stream)sourceStream);
                                                         txt.InsertAfterSelf<AltChunk>(new AltChunk()
@@ -193,7 +195,7 @@ namespace WordTemplateReport.WordReport
                                                     }
                                                     else if (str.Contains("<HTML"))
                                                     {
-                                                        string id = name + (new Random(10000000).Next());
+                                                        string id = name + rnd.Next(1000000);
                                                         using (MemoryStream sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(str)))
                                                             _document.MainDocumentPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, id).FeedData((Stream)sourceStream);
                                                         AltChunk newElement2 = new AltChunk();
