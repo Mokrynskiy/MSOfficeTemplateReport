@@ -11,7 +11,6 @@ using System.Text.RegularExpressions;
 using OpenXmlPowerTools;
 using Text = DocumentFormat.OpenXml.Wordprocessing.Text;
 using Table = DocumentFormat.OpenXml.Wordprocessing.Table;
-using Break = DocumentFormat.OpenXml.Wordprocessing.Break;
 using TableRow = DocumentFormat.OpenXml.Wordprocessing.TableRow;
 
 namespace WordTemplateReport.WordReport
@@ -19,8 +18,7 @@ namespace WordTemplateReport.WordReport
     public sealed class WordTemplate
     {
         private string _path;
-        private Dictionary<string, object> _variables;
-        private MemoryStream _ms;
+        private Dictionary<string, object> _variables;       
         private WordprocessingDocument _document;
         private readonly Regex _regex = new Regex("\\{\\{.*?\\}\\}");
         private readonly Regex _tagRegex = new Regex("[\\{]{2}[a-zA-Z.]+[\\}]{2}");
@@ -32,13 +30,13 @@ namespace WordTemplateReport.WordReport
             _variables = new Dictionary<string, object>();
         }
 
-        public void AddVariable(string name, object data) => this._variables.Add(name, data);
+        public void AddVariable(string name, object data) => _variables.Add(name, data);
 
         public void Generate()
         {
             try
             {
-                byte[] buffer = File.ReadAllBytes(this._path);
+                byte[] buffer = File.ReadAllBytes(_path);
                 MemoryStream memoryStream = new MemoryStream();
                 memoryStream.Write(buffer, 0, buffer.Length);
                 _document = WordprocessingDocument.Open((Stream)memoryStream, true);
@@ -148,7 +146,7 @@ namespace WordTemplateReport.WordReport
                     if (variable.Any<KeyValuePair<string, object>>())
                     {
                         var values = variable.FirstOrDefault<KeyValuePair<string, object>>().Value;
-                        values.GetType();
+                        
                         if (values != null)
                         {
                             IList list = (IList)values;
