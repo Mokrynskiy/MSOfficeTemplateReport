@@ -53,7 +53,6 @@ namespace MSOfficeTemplateReport.ExcelReport
         {
             try
             {
-                var x = _workbook.Worksheet(1).CellsUsed();
                 _workbook.SaveAs(path);
                 _workbook.Dispose();
                 return path;
@@ -64,6 +63,15 @@ namespace MSOfficeTemplateReport.ExcelReport
                 _workbook.Dispose();
                 throw ex;
             }
+        }
+
+        public Byte[] ToByteArray()
+        {
+            _workbook.SaveAs(_ms);
+            var byteArray = _ms.ToArray();
+            _ms.Close();
+            _workbook.Dispose();
+            return byteArray;
         }
 
         private void FillDocument()

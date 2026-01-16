@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MSOfficeTemplateReport
+﻿namespace MSOfficeTemplateReport
 {
     public interface ITemplate
     {
@@ -10,5 +6,7 @@ namespace MSOfficeTemplateReport
         void Generate();
 
         string SaveAs(string path);
+
+        byte[] ToByteArray();
     }
 }

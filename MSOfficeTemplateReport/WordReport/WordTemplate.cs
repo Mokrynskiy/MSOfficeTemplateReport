@@ -19,6 +19,7 @@ namespace MSOfficeTemplateReport.WordReport
     {
         private string _path;
         private byte[] _byteArray;
+        private MemoryStream _ms;
         private Dictionary<string, object> _variables = new Dictionary<string, object>();       
         private WordprocessingDocument _document;
         private readonly Regex _regex = new Regex("\\{\\{.*?\\}\\}");
@@ -43,9 +44,9 @@ namespace MSOfficeTemplateReport.WordReport
             {
                 if(!_byteArray.Any())
                     _byteArray = File.ReadAllBytes(_path);
-                MemoryStream memoryStream = new MemoryStream();
-                memoryStream.Write(_byteArray, 0, _byteArray.Length);
-                _document = WordprocessingDocument.Open((Stream)memoryStream, true);
+                _ms = new MemoryStream();
+                _ms.Write(_byteArray, 0, _byteArray.Length);
+                _document = WordprocessingDocument.Open((Stream)_ms, true);
                 CleanDoc();
                 FillHeader();
                 FillFooter();
@@ -54,6 +55,7 @@ namespace MSOfficeTemplateReport.WordReport
             catch (Exception ex)
             {
                 _document.Dispose();
+                _ms.Close();
                 throw ex;
             }
         }
@@ -284,16 +286,26 @@ namespace MSOfficeTemplateReport.WordReport
         {
             try
             {
-                OpenXmlPackage openXmlPackage = _document.Clone(outputFilePath);
+                _document.Clone(outputFilePath);
                 _document.Dispose();
-                openXmlPackage.Dispose();
+                _ms.Close();
                 return outputFilePath;
             }
             catch (Exception ex)
             {
                 _document.Dispose();
+                _ms.Close();
                 throw ex;
             }
+        }
+
+        public byte[] ToByteArray()
+        {
+            _document.Save();
+            byte[] byteArray = _ms.ToArray();
+            _document.Dispose();
+            _ms.Close();
+            return byteArray;
         }
     }
 }
