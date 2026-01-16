@@ -16,12 +16,12 @@ List<Positions> pos = new List<Positions>
 
 
 string resultFileName = "Result.xlsx";
-var data = File.ReadAllBytes("TestTemplate.docx");
-var template = new WordTemplate(data);
+var data = File.ReadAllBytes("ExcelTest.xlsx");
+var template = new ExcelTemplate(data);
 template.AddVariable("Header", header);
 template.AddVariable("Prod", pos);
 template.Generate();
-File.WriteAllBytes("1.docx", template.ToByteArray());
+File.WriteAllBytes("1.xlsx", template.ToByteArray());
 //template.SaveAs(resultFileName);
 
 

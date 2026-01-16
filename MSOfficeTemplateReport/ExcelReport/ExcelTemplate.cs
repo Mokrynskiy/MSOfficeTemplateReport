@@ -65,9 +65,9 @@ namespace MSOfficeTemplateReport.ExcelReport
             }
         }
 
-        public Byte[] ToByteArray()
+        public byte[] ToByteArray()
         {
-            _workbook.SaveAs(_ms);
+            _workbook.Save();
             var byteArray = _ms.ToArray();
             _ms.Close();
             _workbook.Dispose();
