@@ -9,9 +9,9 @@ Header header = new()
 };
 List<Positions> pos = new List<Positions>
 {
-    new Positions {PropA = 1.1, PropB = "1.2", PropC = "1.3"},
-    new Positions {PropA = 2.1, PropB = "2.2", PropC = "2.3"},
-    new Positions {PropA = 3.1, PropB = "3.2", PropC = "3.3"}
+    new Positions {PropA = 1.1, PropB = 1.2, PropC = DateTime.UtcNow},
+    new Positions {PropA = 2.1, PropB = 2.2, PropC = DateTime.Now},
+    new Positions {PropA = 3.1, PropB = 3.2, PropC = DateTime.Now}
 };
 
 
@@ -34,6 +34,6 @@ class Header
 class Positions
 {
     public double PropA { get; set; }
-    public string PropB { get; set; }
-    public string PropC { get; set; }
+    public double PropB { get; set; }
+    public DateTime PropC { get; set; }
 }

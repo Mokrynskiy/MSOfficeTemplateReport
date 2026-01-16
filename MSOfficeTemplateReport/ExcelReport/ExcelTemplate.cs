@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace MSOfficeTemplateReport.ExcelReport
@@ -92,8 +93,8 @@ namespace MSOfficeTemplateReport.ExcelReport
                                         if (!cell.Value.IsBlank && _regex.IsMatch(cell.Value.GetText()) && _itemRegex.IsMatch(cell.Value.GetText()))
                                         {
                                             var fieldName = cell.GetText().Replace("{", "").Replace("}", "").Split('.')[1];                                            
-                                            var str = item.GetType().GetProperty(fieldName)?.GetValue(item).ToString();                                            
-                                            cell.Value = str;
+                                            var value = item.GetType().GetProperty(fieldName)?.GetValue(item);                                          
+                                            cell.Value = value.ConvertToXLValue();
                                         }
                                     }
                                     startRow++;                                    
