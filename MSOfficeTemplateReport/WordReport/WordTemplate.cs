@@ -13,12 +13,13 @@ using Text = DocumentFormat.OpenXml.Wordprocessing.Text;
 using Table = DocumentFormat.OpenXml.Wordprocessing.Table;
 using TableRow = DocumentFormat.OpenXml.Wordprocessing.TableRow;
 
-namespace WordTemplateReport.WordReport
+namespace MSOfficeTemplateReport.WordReport
 {
-    public sealed class WordTemplate
+    public sealed class WordTemplate : ITemplate
     {
         private string _path;
-        private Dictionary<string, object> _variables;       
+        private byte[] _byteArray;
+        private Dictionary<string, object> _variables = new Dictionary<string, object>();       
         private WordprocessingDocument _document;
         private readonly Regex _regex = new Regex("\\{\\{.*?\\}\\}");
         private readonly Regex _tagRegex = new Regex("[\\{]{2}[a-zA-Z.]+[\\}]{2}");
@@ -27,7 +28,11 @@ namespace WordTemplateReport.WordReport
         public WordTemplate(string path)
         {
             _path = path;
-            _variables = new Dictionary<string, object>();
+        }
+
+        public WordTemplate(byte[] byteArray)
+        {
+            _byteArray = byteArray;
         }
 
         public void AddVariable(string name, object data) => _variables.Add(name, data);
@@ -36,9 +41,10 @@ namespace WordTemplateReport.WordReport
         {
             try
             {
-                byte[] buffer = File.ReadAllBytes(_path);
+                if(!_byteArray.Any())
+                    _byteArray = File.ReadAllBytes(_path);
                 MemoryStream memoryStream = new MemoryStream();
-                memoryStream.Write(buffer, 0, buffer.Length);
+                memoryStream.Write(_byteArray, 0, _byteArray.Length);
                 _document = WordprocessingDocument.Open((Stream)memoryStream, true);
                 CleanDoc();
                 FillHeader();

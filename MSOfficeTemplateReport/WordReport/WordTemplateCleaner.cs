@@ -4,7 +4,7 @@ using System;
 using System.Text;
 using System.Xml.Linq;
 
-namespace WordTemplateReport.WordReport
+namespace MSOfficeTemplateReport.WordReport
 {
     internal sealed class WordTemplateCleaner
     {

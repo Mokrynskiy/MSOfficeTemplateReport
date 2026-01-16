@@ -1,21 +1,18 @@
 ﻿using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
-using OpenXmlPowerTools;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 namespace MSOfficeTemplateReport.ExcelReport
 {
-    public class ExcelTemplate
+    public class ExcelTemplate : ITemplate
     {
         private string _path;
-        private Dictionary<string, object> _variables;
+        private byte[] _byteArray;
+        private Dictionary<string, object> _variables = new Dictionary<string, object>();
         private XLWorkbook _workbook;
         private readonly Regex _regex = new Regex("\\{\\{.*?\\}\\}");
         private readonly Regex _itemRegex = new Regex("Item");
@@ -23,7 +20,11 @@ namespace MSOfficeTemplateReport.ExcelReport
         public ExcelTemplate(string path)
         {
             _path = path;
-            _variables = new Dictionary<string, object>();
+        }
+
+        public ExcelTemplate(byte[] byteArray)
+        {
+            _byteArray = byteArray;
         }
 
         public void AddVariable(string name, object data) => _variables.Add(name, data);
@@ -32,9 +33,10 @@ namespace MSOfficeTemplateReport.ExcelReport
         {
             try
             {
-                byte[] buffer = File.ReadAllBytes(_path);
+                if(!_byteArray.Any())
+                    _byteArray = File.ReadAllBytes(_path);
                 _ms = new MemoryStream();
-                _ms.Write(buffer, 0, buffer.Length);
+                _ms.Write(_byteArray, 0, _byteArray.Length);
                 _workbook = new XLWorkbook(_ms);
                 FillDocument();
             }
@@ -90,8 +92,8 @@ namespace MSOfficeTemplateReport.ExcelReport
                                         if (!cell.Value.IsBlank && _regex.IsMatch(cell.Value.GetText()) && _itemRegex.IsMatch(cell.Value.GetText()))
                                         {
                                             var fieldName = cell.GetText().Replace("{", "").Replace("}", "").Split('.')[1];                                            
-                                            string str = item.GetType().GetProperty(fieldName)?.GetValue(item)?.ToString();
-                                            cell.SetValue(str);
+                                            var str = item.GetType().GetProperty(fieldName)?.GetValue(item).ToString();                                            
+                                            cell.Value = str;
                                         }
                                     }
                                     startRow++;                                    

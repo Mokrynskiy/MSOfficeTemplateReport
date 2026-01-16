@@ -1,5 +1,5 @@
 ﻿using MSOfficeTemplateReport.ExcelReport;
-using WordTemplateReport.WordReport;
+using MSOfficeTemplateReport.WordReport;
 
 Header header = new()
 {
@@ -16,7 +16,8 @@ List<Positions> pos = new List<Positions>
 
 
 string resultFileName = "Result.xlsx";
-var template = new ExcelTemplate("ExcelTest.xlsx");
+var data = File.ReadAllBytes("ExcelTest.xlsx");
+var template = new ExcelTemplate(data);
 template.AddVariable("Header", header);
 template.AddVariable("Prod", pos);
 template.Generate();

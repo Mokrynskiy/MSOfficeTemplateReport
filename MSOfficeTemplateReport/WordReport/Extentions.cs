@@ -8,7 +8,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Picture = DocumentFormat.OpenXml.Drawing.Pictures.Picture;
 
-namespace WordTemplateReport.WordReport
+namespace MSOfficeTemplateReport.WordReport
 {
     internal static class Extentions
     {
