@@ -1,10 +1,12 @@
 ﻿using ClosedXML.Excel;
+using MSOfficeTemplateReport.Abstract;
+using MSOfficeTemplateReport.Extensions;
+using MSOfficeTemplateReport.Models;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace MSOfficeTemplateReport.ExcelReport
@@ -30,16 +32,50 @@ namespace MSOfficeTemplateReport.ExcelReport
 
         public void AddVariable(string name, object data) => _variables.Add(name, data);
 
+        public void AddVariables(Dictionary<string, object> variables)
+        {
+            foreach (var variable in variables)
+            {
+                _variables.Add(variable.Key, variable.Value);
+            }
+        }
+
         public void Generate()
         {
             try
             {
-                if(!_byteArray.Any())
+                if(_byteArray == null)
                     _byteArray = File.ReadAllBytes(_path);
                 _ms = new MemoryStream();
                 _ms.Write(_byteArray, 0, _byteArray.Length);
                 _workbook = new XLWorkbook(_ms);
                 FillDocument();
+            }
+            catch (Exception ex)
+            {
+                _ms.Close();
+                _workbook.Dispose();
+                throw ex;
+            }
+        }
+
+        public GenerateResultModel Generate(string fileName)
+        {
+            try
+            {
+                if (_byteArray == null)
+                    _byteArray = File.ReadAllBytes(_path);
+                _ms = new MemoryStream();
+                _ms.Write(_byteArray, 0, _byteArray.Length);
+                _workbook = new XLWorkbook(_ms);
+                FillDocument();
+
+                string file= string.IsNullOrWhiteSpace(fileName) ? $"{DateTime.Now.Ticks}.xlsx" : Path.GetFileNameWithoutExtension(fileName);
+
+                var byteArray = ToByteArray();
+
+                return new GenerateResultModel { FileName = file, ByteArray = byteArray };
+
             }
             catch (Exception ex)
             {

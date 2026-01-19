@@ -1,5 +1,4 @@
-﻿using MSOfficeTemplateReport.ExcelReport;
-using MSOfficeTemplateReport.WordReport;
+﻿using MSOfficeTemplateReport;
 
 Header header = new()
 {
@@ -15,14 +14,17 @@ List<Positions> pos = new List<Positions>
 };
 
 
-string resultFileName = "Result.xlsx";
+Dictionary<string, object> variables = new Dictionary<string, object>();
+variables.Add("Header", header);
+variables.Add("Prod", pos);
+
+
+string resultFileName = "Result.docx";
 var data = File.ReadAllBytes("ExcelTest.xlsx");
-var template = new ExcelTemplate(data);
-template.AddVariable("Header", header);
-template.AddVariable("Prod", pos);
-template.Generate();
-File.WriteAllBytes("1.xlsx", template.ToByteArray());
-//template.SaveAs(resultFileName);
+var template = Template.Create("ExcelTest.xlsx", variables);
+var result = template.Generate(null);
+
+File.WriteAllBytes(result.FileName, result.ByteArray);
 
 
 class Header

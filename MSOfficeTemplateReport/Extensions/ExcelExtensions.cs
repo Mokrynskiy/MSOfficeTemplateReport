@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MSOfficeTemplateReport.ExcelReport
+namespace MSOfficeTemplateReport.Extensions
 {
     public static class ExcelExtensions
     {

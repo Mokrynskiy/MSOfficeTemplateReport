@@ -6,11 +6,12 @@ using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using MSOfficeTemplateReport.WordReport;
 using Picture = DocumentFormat.OpenXml.Drawing.Pictures.Picture;
 
-namespace MSOfficeTemplateReport.WordReport
+namespace MSOfficeTemplateReport.Extensions
 {
-    internal static class Extentions
+    internal static class WordExtensions
     {
         static readonly Regex regex = new Regex(@"\{\{.*?\}\}", RegexOptions.Compiled | RegexOptions.Multiline);
         internal static void CleanRun(this WordprocessingDocument document)
@@ -73,7 +74,7 @@ namespace MSOfficeTemplateReport.WordReport
         internal static bool EndsWith(this string str, char value)
         {
             int lastPos = str.Length - 1;
-            return ((uint)lastPos < (uint)str.Length) && str[str.Length - 1] == value;
+            return (uint)lastPos < (uint)str.Length && str[str.Length - 1] == value;
         }
 
         internal static bool StartsWith(this string str, char value)

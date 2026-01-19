@@ -12,6 +12,9 @@ using OpenXmlPowerTools;
 using Text = DocumentFormat.OpenXml.Wordprocessing.Text;
 using Table = DocumentFormat.OpenXml.Wordprocessing.Table;
 using TableRow = DocumentFormat.OpenXml.Wordprocessing.TableRow;
+using MSOfficeTemplateReport.Extensions;
+using MSOfficeTemplateReport.Abstract;
+using MSOfficeTemplateReport.Models;
 
 namespace MSOfficeTemplateReport.WordReport
 {
@@ -38,15 +41,23 @@ namespace MSOfficeTemplateReport.WordReport
 
         public void AddVariable(string name, object data) => _variables.Add(name, data);
 
+        public void AddVariables(Dictionary<string, object> variables)
+        {
+            foreach (var variable in variables)
+            {
+                _variables.Add(variable.Key, variable.Value);
+            }
+        }
+
         public void Generate()
         {
             try
             {
-                if(!_byteArray.Any())
+                if(_byteArray == null)
                     _byteArray = File.ReadAllBytes(_path);
                 _ms = new MemoryStream();
                 _ms.Write(_byteArray, 0, _byteArray.Length);
-                _document = WordprocessingDocument.Open((Stream)_ms, true);
+                _document = WordprocessingDocument.Open(_ms, true);
                 CleanDoc();
                 FillHeader();
                 FillFooter();
@@ -59,6 +70,35 @@ namespace MSOfficeTemplateReport.WordReport
                 throw ex;
             }
         }
+
+        public GenerateResultModel Generate(string fileName)
+        {
+            try
+            {
+                if (_byteArray == null)
+                    _byteArray = File.ReadAllBytes(_path);
+                _ms = new MemoryStream();
+                _ms.Write(_byteArray, 0, _byteArray.Length);
+                _document = WordprocessingDocument.Open(_ms, true);
+                CleanDoc();
+                FillHeader();
+                FillFooter();
+                FillBody();
+
+                string file = string.IsNullOrWhiteSpace(fileName) ? $"{DateTime.Now.Ticks}.docx" : Path.GetFileNameWithoutExtension(fileName);
+
+                var byteArray = ToByteArray();
+
+                return new GenerateResultModel { FileName = file, ByteArray = byteArray };
+            }
+            catch (Exception ex)
+            {
+                _document.Dispose();
+                _ms.Close();
+                throw ex;
+            }
+        }
+
         private void FillBody()
         {
             var body = _document.MainDocumentPart.Document.Body;
@@ -306,6 +346,6 @@ namespace MSOfficeTemplateReport.WordReport
             _document.Dispose();
             _ms.Close();
             return byteArray;
-        }
+        }       
     }
 }
