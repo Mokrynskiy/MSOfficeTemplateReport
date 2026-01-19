@@ -30,13 +30,23 @@ namespace MSOfficeTemplateReport.ExcelReport
             _byteArray = byteArray;
         }
 
-        public void AddVariable(string name, object data) => _variables.Add(name, data);
+        public void AddVariable(string name, object data)
+        {
+            if (data.GetType().Name == "JsonElement")
+            {
+                _variables.Add(name, data.ToString().JsonElementToObjectObject());
+            }
+            else
+            {
+                _variables.Add(name, data);
+            }
+        }
 
         public void AddVariables(Dictionary<string, object> variables)
         {
             foreach (var variable in variables)
             {
-                _variables.Add(variable.Key, variable.Value);
+                AddVariable(variable.Key, variable.Value);
             }
         }
 

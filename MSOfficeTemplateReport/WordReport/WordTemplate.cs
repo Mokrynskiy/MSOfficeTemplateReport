@@ -39,7 +39,17 @@ namespace MSOfficeTemplateReport.WordReport
             _byteArray = byteArray;
         }
 
-        public void AddVariable(string name, object data) => _variables.Add(name, data);
+        public void AddVariable(string name, object data)
+        {
+            if (data.GetType().Name == "JsonElement")
+            {
+                _variables.Add(name, data.ToString().JsonElementToObjectObject());
+            }
+            else
+            {
+                _variables.Add(name, data);
+            }
+        }
 
         public void AddVariables(Dictionary<string, object> variables)
         {
@@ -110,21 +120,27 @@ namespace MSOfficeTemplateReport.WordReport
         }
         private void FillFooter()
         {
-            var footer = _document.MainDocumentPart.FooterParts.FirstOrDefault();
-            if (footer == null) return;
-            var text = footer.Footer.Descendants<Text>();
-            var tables = footer.Footer.Descendants<TableProperties>();
-            if (text != null) FillText(text);
-            if (tables != null) FillTables(tables);
+            var footers = _document.MainDocumentPart.FooterParts;
+            foreach (var footer in footers)
+            {
+                if (footer == null) return;
+                var text = footer.Footer.Descendants<Text>();
+                var tables = footer.Footer.Descendants<TableProperties>();
+                if (text != null) FillText(text);
+                if (tables != null) FillTables(tables);
+            }
         }
         private void FillHeader()
-        {
-            var header = _document.MainDocumentPart.HeaderParts.FirstOrDefault();
-            if (header == null) return;
-            var text = header.Header.Descendants<Text>();
-            var tables = header.Header.Descendants<TableProperties>();
-            if(text != null) FillText(text);
-            if (tables != null) FillTables(tables);
+        {            
+            var headers = _document.MainDocumentPart.HeaderParts;
+            foreach (var header in headers)
+            {
+                if (header == null) return;
+                var text = header.Header.Descendants<Text>();
+                var tables = header.Header.Descendants<TableProperties>();
+                if (text != null) FillText(text);
+                if (tables != null) FillTables(tables);
+            }
         }
         private void FillText (IEnumerable<Text> text)
         {
@@ -148,9 +164,9 @@ namespace MSOfficeTemplateReport.WordReport
                                     string str = obj.GetType().GetProperty(name)?.GetValue(obj)?.ToString();
                                     if (str != null)
                                     {
+                                        string id =name + Guid.NewGuid().ToString();
                                         if (str.Contains("rtf1"))
                                         {
-                                            string id = name + rnd.Next(1000000);
                                             using (MemoryStream sourceStream = new MemoryStream(Encoding.ASCII.GetBytes(str)))
                                                 _document.MainDocumentPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Rtf, id).FeedData((Stream)sourceStream);
                                             txt.InsertAfterSelf<AltChunk>(new AltChunk()
@@ -161,7 +177,6 @@ namespace MSOfficeTemplateReport.WordReport
                                         }
                                         else if (str.Contains("<HTML"))
                                         {
-                                            string id = name + rnd.Next(1000000);
                                             using (MemoryStream sourceStream = new MemoryStream(Encoding.UTF8.GetBytes(str)))
                                                 _document.MainDocumentPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, id).FeedData((Stream)sourceStream);
                                             txt.InsertAfterSelf<AltChunk>(new AltChunk()
@@ -174,7 +189,7 @@ namespace MSOfficeTemplateReport.WordReport
                                             txt.Text = txt.Text.Replace(match.ToString(), str);
                                     }
                                     else
-                                        txt.Text = txt.Text.Replace(match.ToString(), "[" + match.ToString() + " - значение было null]");
+                                        txt.Text = txt.Text.Replace(match.ToString(), "");
                                 }
                             }
                         }

@@ -18,7 +18,6 @@ Dictionary<string, object> variables = new Dictionary<string, object>();
 variables.Add("Header", header);
 variables.Add("Prod", pos);
 
-
 string resultFileName = "Result.docx";
 var data = File.ReadAllBytes("ExcelTest.xlsx");
 var template = Template.Create("ExcelTest.xlsx", variables);
