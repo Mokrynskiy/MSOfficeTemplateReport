@@ -3,7 +3,6 @@
 # ПРАВИЛА ФОРМИРОВАНИЯ ШАБЛОНОВ
 
 ## Правила формирования шаблона Word
-### Пример шаблона Word [testwordtemplate.docx](/reprt_api_assets/testwordtemplate.docx)
 >Тэги, за исключением тэгов в табличной части (которая заполняется из коллекций), состоят из пары {{Ключ.Значение}}, где ключ - key элемента переданной в Dictionary<string, object>, а значение - это наименование поля объекта.
 
 <img width="1349" height="384" alt="wordtemplate" src="https://github.com/user-attachments/assets/849bc2ee-4e0b-42e5-bb2c-0c3ebe93c78e" />
@@ -15,8 +14,6 @@
 <img width="386" height="449" alt="wordtemplatetablesettings" src="https://github.com/user-attachments/assets/34fcbb96-f174-4d46-90f4-625c6d553602" />
 
 ## Правила формирования шаблона Excel
-### Пример шаблона Excel [testexceltemplate.xlsx](/reprt_api_assets/testexceltemplate.xlsx)
-
 >Оформление тэгов в шаблонах Excel аналогично Word за исключением наличия специальных тэгов:
 **<\<Sum>>** - Выводит сумму значений колонки
 **<\<RowNumber>>** - Нумерует строки
