@@ -9,8 +9,29 @@
     <Description>Создание отчетов по шаблонам Word и Excel</Description>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>1.0.12</Version>
+    <Version>2.0.0</Version>
+    <ApplicationIcon>document_write.ico</ApplicationIcon>
+    <PackageIcon>Document.png</PackageIcon>
+    <RepositoryUrl>https://github.com/Mokrynskiy/MSOfficeTemplateReport</RepositoryUrl>
+    <PackageTags>Отчет: Report;  Word Report; Excel Report; WordReport; ExcelReport; TemplateReport</PackageTags>
+    <PackageReleaseNotes>Данная версия не совместима с предыдущими. Читайте Redme</PackageReleaseNotes>
+    <PackageReadmeFile>redme.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="document_write.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\..\Desktop\redme.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\..\..\Downloads\Document.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
