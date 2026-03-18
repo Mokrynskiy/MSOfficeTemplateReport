@@ -16,10 +16,13 @@ namespace MSOfficeTemplateReport.WordReport
             Continuing,
         }
 
-        private RunState _state;
-        private Text _firstText;
-        private string _lastText;
-        private readonly StringBuilder _texts = new StringBuilder();
+        private RunState state;
+
+        private Text firstText;
+
+        private string lastText;
+
+        private readonly StringBuilder texts = new StringBuilder();
 
         public void Clean(OpenXmlElement item, Paragraph p)
         {
@@ -29,38 +32,50 @@ namespace MSOfficeTemplateReport.WordReport
             }
 
             var text = r.GetFirstChild<Text>();
+
             if (text == null)
             {
                 return;
             }
 
             var str = text.Text;
-            switch (_state)
+
+            switch (state)
             {
-                case RunState.None: //none => none, starting, started
+                case RunState.None:
+
                     TryStart(text);
+
                     break;
-                case RunState.Starting: //starting => none, started
-                    _state = str.StartsWith("{") ? RunState.Started : RunState.None;
+
+                case RunState.Starting:
+
+                    state = str.StartsWith("{") ? RunState.Started : RunState.None;
+
                     break;
-                case RunState.Continuing:   //continuing => started
-                    str = _lastText + str;
-                    _lastText = null;
-                    _state = RunState.Started;
+
+                case RunState.Continuing:
+
+                    str = lastText + str;
+
+                    lastText = null;
+
+                    state = RunState.Started;
+
                     break;
             }
 
-            if (_state != RunState.None)
+            if (state != RunState.None)
             {
-                _texts.Append(text.Text);
-                if (!ReferenceEquals(_firstText, text))
+                texts.Append(text.Text);
+
+                if (!ReferenceEquals(firstText, text))
                 {
                     p.RemoveChild(r);
                 }
             }
-
-            //started => started, continuing, ending, none
-            if (_state == RunState.Started)
+            
+            if (state == RunState.Started)
             {
                 TryEnd(str);
             }
@@ -68,17 +83,19 @@ namespace MSOfficeTemplateReport.WordReport
 
         private void TryStart(Text text)
         {
-            _state = text.Text.EndsWith("{{")
+            state = text.Text.EndsWith("{{")
                 ? RunState.Started
                 : text.Text.EndsWith("{")
                 ? RunState.Starting
                 : text.Text.Contains("{{")
                 ? RunState.Started
                 : RunState.None;
-            if (_state != RunState.None)
+
+            if (state != RunState.None)
             {
-                _texts.Clear();
-                _firstText = text;
+                texts.Clear();
+
+                firstText = text;
             }
         }
 
@@ -86,28 +103,35 @@ namespace MSOfficeTemplateReport.WordReport
         {
             if (!str.EndsWith("{{") && str.EndsWith("{"))
             {
-                _lastText = str;
-                _state = RunState.Continuing;
+                lastText = str;
+
+                state = RunState.Continuing;
+
                 return;
             }
 
             var i = str.LastIndexOf("}}", StringComparison.Ordinal);
+
             if (i >= 0)
             {
                 var j = str.LastIndexOf("{{", StringComparison.Ordinal);
+
                 if (j <= i)
                 {
-                    _firstText.Text = _texts.ToString();
-                    //xml:space="preserve
-                    _firstText.SetAttribute(new OpenXmlAttribute("space", XNamespace.Xml.NamespaceName, "preserve"));
-                    _state = RunState.None;
-                    _firstText = null;
+                    firstText.Text = texts.ToString();
+                   
+                    firstText.SetAttribute(new OpenXmlAttribute("space", XNamespace.Xml.NamespaceName, "preserve"));
+
+                    state = RunState.None;
+
+                    firstText = null;
                 }
             }
             else if (str.EndsWith("}"))
             {
-                _lastText = str;
-                _state = RunState.Continuing;
+                lastText = str;
+
+                state = RunState.Continuing;
             }
         }
     }

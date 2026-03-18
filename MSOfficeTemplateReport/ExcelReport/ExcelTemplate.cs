@@ -3,181 +3,177 @@ using MSOfficeTemplateReport.Abstract;
 using MSOfficeTemplateReport.Extensions;
 using MSOfficeTemplateReport.Models;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
 namespace MSOfficeTemplateReport.ExcelReport
 {
-    public class ExcelTemplate : ITemplate
+    internal class ExcelTemplate : ITemplate
     {
-        private string _path;
-        private byte[] _byteArray;
-        private Dictionary<string, object> _variables = new Dictionary<string, object>();
-        private XLWorkbook _workbook;
-        private readonly Regex _regex = new Regex("\\{\\{.*?\\}\\}");
-        private readonly Regex _itemRegex = new Regex("Item");
-        private MemoryStream _ms;
-        public ExcelTemplate(string path)
+        private Dictionary<string, JsonNode> variables;
+
+        private readonly byte[] byteArray;
+
+        public ExcelTemplate(byte[] byteArray, Dictionary<string, JsonNode> variables)
         {
-            _path = path;
+            this.byteArray = byteArray;
+
+            this.variables = variables;
         }
 
-        public ExcelTemplate(byte[] byteArray)
+        public void AddVariable(string name, object variable)
         {
-            _byteArray = byteArray;
+            Template.AddJsonVariable(ref variables, name, variable);
         }
 
-        public void AddVariable(string name, object data)
-        {
-            if (data.GetType().Name == "JsonElement")
-            {
-                _variables.Add(name, data.ToString().JsonElementToObjectObject());
-            }
-            else
-            {
-                _variables.Add(name, data);
-            }
-        }
-
-        public void AddVariables(Dictionary<string, object> variables)
-        {
-            foreach (var variable in variables)
-            {
-                AddVariable(variable.Key, variable.Value);
-            }
-        }
-
-        public void Generate()
+        public ReportResultModel Generate(string fileName = null)
         {
             try
             {
-                if(_byteArray == null)
-                    _byteArray = File.ReadAllBytes(_path);
-                _ms = new MemoryStream();
-                _ms.Write(_byteArray, 0, _byteArray.Length);
-                _workbook = new XLWorkbook(_ms);
-                FillDocument();
+                string file = string.IsNullOrWhiteSpace(fileName) ?
+                    $"{DateTime.Now.Ticks}{FileFormates.Xlsx}" :
+                    $"{Path.GetFileNameWithoutExtension(fileName)}{FileFormates.Xlsx}";
+
+                using (var ms = new MemoryStream())
+                {
+                    ms.Write(this.byteArray, 0, this.byteArray.Length);
+
+                    using (var workbook = new XLWorkbook(ms))
+                    {
+                        FillDocument(workbook);
+
+                        workbook.Save();
+
+                        var byteArray = ms.ToArray();
+
+                        return new ReportResultModel(file, byteArray);
+                    }
+                }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _ms.Close();
-                _workbook.Dispose();
-                throw ex;
+                throw;
             }
         }
 
-        public GenerateResultModel Generate(string fileName)
+        private void FillDocument(XLWorkbook workbook)
         {
             try
             {
-                if (_byteArray == null)
-                    _byteArray = File.ReadAllBytes(_path);
-                _ms = new MemoryStream();
-                _ms.Write(_byteArray, 0, _byteArray.Length);
-                _workbook = new XLWorkbook(_ms);
-                FillDocument();
+                var worsheets = workbook?.Worksheets;
 
-                string file= string.IsNullOrWhiteSpace(fileName) ? $"{DateTime.Now.Ticks}.xlsx" : Path.GetFileNameWithoutExtension(fileName);
-
-                var byteArray = ToByteArray();
-
-                return new GenerateResultModel { FileName = file, ByteArray = byteArray };
-
-            }
-            catch (Exception ex)
-            {
-                _ms.Close();
-                _workbook.Dispose();
-                throw ex;
-            }
-        }
-
-        public string SaveAs(string path)
-        {
-            try
-            {
-                _workbook.SaveAs(path);
-                _workbook.Dispose();
-                return path;
-            }
-            catch (Exception ex)
-            {
-                _ms.Close();
-                _workbook.Dispose();
-                throw ex;
-            }
-        }
-
-        public byte[] ToByteArray()
-        {
-            _workbook.Save();
-            var byteArray = _ms.ToArray();
-            _ms.Close();
-            _workbook.Dispose();
-            return byteArray;
-        }
-
-        private void FillDocument()
-        {
-            try
-            {
-                var worsheets = _workbook.Worksheets;
                 foreach (var worksheet in worsheets)
                 {
-                    var cells = worksheet.RangeUsed().CellsUsed().Where(x => _regex.IsMatch(x.GetText()));
-                    foreach (var variable in _variables)
+                    var cells = worksheet?.RangeUsed()?.CellsUsed().Where(x => x.Value.IsText && Template.TagRegex.IsMatch(x.GetText()));
+
+                    foreach (var variable in variables)
                     {
-                        var type = variable.Value.GetType();
-                        if (type.IsArray || type.IsGenericType)
+                        if (variable.Value.GetValueKind() == JsonValueKind.Array)
                         {
-                            var ranges = worksheet.Ranges(variable.Key);
-                            foreach (var range in ranges)
+                            var ranges = worksheet?.Ranges(variable.Key);
+
+                            if (ranges != null)
                             {
-                                int startRow = range.LastRow().RowNumber();
-                                var data = (IList)variable.Value;
-                                range.InsertRowsBelow(data.Count - 1);
-                                foreach (var item in (IList)variable.Value)
+                                foreach (var range in ranges)
                                 {
-                                    foreach (var cell in worksheet.Row(startRow).Cells())
+                                    var data = variable.Value.AsArray();
+
+                                    range.FirstRow().InsertRowsBelow(data.Count - 1);
+
+                                    int rowNumber = 1;
+
+                                    foreach (var row in range.Rows())
                                     {
-                                        worksheet.Cell(startRow + 1, cell.WorksheetColumn().ColumnNumber()).SetValue(cell.Value);
-                                        if (!cell.Value.IsBlank && _regex.IsMatch(cell.Value.GetText()) && _itemRegex.IsMatch(cell.Value.GetText()))
+                                        if (range.LastRow() == row)
                                         {
-                                            var fieldName = cell.GetText().Replace("{", "").Replace("}", "").Split('.')[1];                                            
-                                            var value = item.GetType().GetProperty(fieldName)?.GetValue(item);                                          
-                                            cell.Value = value.ConvertToXLValue();
+                                            var summaryFields = row.Cells().Where(x => x.Value.IsText && Template.SummaryRegex.IsMatch(x.GetText())).ToList();
+
+                                            if (summaryFields.Count > 0)
+                                            {
+                                                foreach (var field in summaryFields)
+                                                {
+                                                    var formula = "SUM(" + worksheet.Cell(range.FirstRow()
+                                                        .RowNumber(), field.Address.ColumnNumber).Address.ToString() +
+                                                        ":" + worksheet.Cell(field.Address.RowNumber - 1, field.Address.ColumnNumber)
+                                                        .Address.ToString() + ")";
+
+                                                    field.FormulaA1 = formula;
+                                                }
+                                            }
+
+                                            continue;
                                         }
+
+                                        if (rowNumber < data.Count)
+                                            row.CopyTo(range.Row(rowNumber + 1));
+
+                                        var values = data[rowNumber - 1];
+
+                                        var tableCells = row.Cells().Where(x => x.Value.IsText && (Template.ItemRegex.IsMatch(x.GetText()) || Template.RowNumberRegex.IsMatch(x.GetText())));
+
+                                        foreach (var cell in tableCells)
+                                        {
+                                            if (Template.RowNumberRegex.IsMatch(cell.GetText()))
+                                            {
+                                                cell.Value = rowNumber;
+
+                                                continue;
+                                            }
+
+                                            var fieldName = cell.GetText().SplitTag()[1];
+
+                                            cell.Value = values.GetExcelValue(fieldName);
+                                        }
+
+                                        rowNumber++;
                                     }
-                                    startRow++;                                    
                                 }
-                                worksheet.Row(startRow).Delete();
                             }
                         }
                         else
                         {
-                            Regex celreg = new Regex(variable.Key);
-                            var currentCells = cells.Where(x => celreg.IsMatch(x.GetText()));
+                            Regex celreg = new Regex("{{" + variable.Key);
+
+                            var currentCells = cells?.Where(x => x.Value.IsText && celreg.IsMatch(x.Value.ToString()));
+
                             foreach (var cell in currentCells)
                             {
-                                var fieldName = cell.GetText().Replace("{", "").Replace("}", "").Split('.')[1];
-                                object obj = variable.Value;
-                                string str = obj.GetType().GetProperty(fieldName)?.GetValue(obj)?.ToString();
-                                cell.SetValue(str);
+                                var matches = Template.TagRegex.Matches(cell.GetText());
+
+                                var text = cell.GetText();
+
+                                if (matches.Count == 1 && text == matches[0].Value)
+                                {
+                                    var fieldName = matches[0].Value.SplitTag()[1];
+
+                                    cell.Value = variable.Value.GetExcelValue(fieldName);
+                                }
+                                else
+                                {
+                                    foreach (var match in matches)
+                                    {
+                                        var fieldName = match?.ToString()?.SplitTag()[1];
+
+                                        var value = variable.Value.GetValue(fieldName);
+
+                                        text = text.Replace(match.ToString(), value);
+                                    }
+
+                                    cell.SetValue(text);
+                                }
                             }
                         }
                     }
-                }                
+                }
             }
             catch (Exception ex)
             {
-                _ms.Close();
-                _workbook.Dispose();
-                throw ex;
+                throw;
             }
         }
-
     }
 }

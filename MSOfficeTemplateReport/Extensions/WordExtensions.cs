@@ -14,6 +14,7 @@ namespace MSOfficeTemplateReport.Extensions
     internal static class WordExtensions
     {
         static readonly Regex regex = new Regex(@"\{\{.*?\}\}", RegexOptions.Compiled | RegexOptions.Multiline);
+
         internal static void CleanRun(this WordprocessingDocument document)
         {
             foreach (var p in document.MainDocumentPart.Document.Descendants<Paragraph>())
@@ -41,7 +42,9 @@ namespace MSOfficeTemplateReport.Extensions
         internal static void CleanRun(this Paragraph p)
         {
             var list = p.ChildElements.ToList();
+
             var cleaner = new WordTemplateCleaner();
+
             foreach (var item in list)
             {
                 cleaner.Clean(item, p);
@@ -51,6 +54,7 @@ namespace MSOfficeTemplateReport.Extensions
         internal static void ReplaceImages(this WordprocessingDocument doc, Dictionary<string, byte[]> dict)
         {
             var docPart = doc.MainDocumentPart.Document;
+
             foreach (var prop in docPart.Descendants<DocProperties>())
             {
                 if (prop.Name == null || !dict.TryGetValue(prop.Name, out var data))
@@ -59,14 +63,18 @@ namespace MSOfficeTemplateReport.Extensions
                 }
 
                 var picture = prop.Parent.Descendants<Picture>().FirstOrDefault();
+
                 var id = picture?.BlipFill?.Blip?.Embed?.Value;
+
                 if (id == null)
                 {
                     continue;
                 }
 
                 var img = doc.MainDocumentPart.GetPartById(id);
+
                 var mem = new MemoryStream(data);
+
                 img.FeedData(mem);
             }
         }
@@ -74,6 +82,7 @@ namespace MSOfficeTemplateReport.Extensions
         internal static bool EndsWith(this string str, char value)
         {
             int lastPos = str.Length - 1;
+
             return (uint)lastPos < (uint)str.Length && str[str.Length - 1] == value;
         }
 
@@ -84,6 +93,82 @@ namespace MSOfficeTemplateReport.Extensions
         internal static string DecodeExpression(this string xml)
         {
             return regex.Replace(xml, m => WebUtility.HtmlDecode(m.Value));
+        }
+
+        internal static IEnumerable<Text> GetAllText(this WordprocessingDocument document)
+        {
+            List<Text> text = new List<Text>();
+
+            var bodyText = document?.MainDocumentPart?.Document?.Body?.Descendants<Text>();
+
+            if (bodyText != null)
+                text.AddRange(bodyText);
+
+            var headers = document?.MainDocumentPart?.HeaderParts;
+
+            var footers = document?.MainDocumentPart?.FooterParts;
+
+            if (headers != null)
+            {
+                foreach (var header in headers)
+                {
+                    var txt = header.Header.Descendants<Text>();
+
+                    if (txt != null)
+                        text.AddRange(txt);
+                }
+            }
+
+            if (footers != null)
+            {
+                foreach (var footer in footers)
+                {
+                    var txt = footer.Footer.Descendants<Text>();
+
+                    if (txt != null)
+                        text.AddRange(txt);
+                }
+            }
+
+            return text;
+        }
+
+        internal static IEnumerable<TableProperties> GetAllTables(this WordprocessingDocument document)
+        {
+            List<TableProperties> tables = new List<TableProperties>();
+
+            var bodyTables = document?.MainDocumentPart?.Document?.Body?.Descendants<TableProperties>();
+
+            var headers = document?.MainDocumentPart?.HeaderParts;
+
+            var footers = document?.MainDocumentPart?.FooterParts;
+
+            if (bodyTables != null)
+                tables.AddRange(bodyTables);
+
+            if (headers != null)
+            {
+                foreach (var header in headers)
+                {
+                    var t = header.Header.Descendants<TableProperties>();
+
+                    if (t != null)
+                        tables.AddRange(t);
+                }
+            }
+
+            if (footers != null)
+            {
+                foreach (var footer in footers)
+                {
+                    var t = footer.Footer.Descendants<TableProperties>();
+
+                    if (t != null)
+                        tables.AddRange(t);
+                }
+            }
+
+            return tables;
         }
     }
 }

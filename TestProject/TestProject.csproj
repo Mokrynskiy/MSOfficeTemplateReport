@@ -8,15 +8,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="ExcelTest.xlsx" />
-    <None Remove="TestTemplate.docx" />
+    <None Remove="testexceltemplate.xlsx" />
+    <None Remove="testwordtemplate.docx" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="ExcelTest.xlsx">
+    <Content Include="testexceltemplate.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="TestTemplate.docx">
+    <Content Include="testwordtemplate.docx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

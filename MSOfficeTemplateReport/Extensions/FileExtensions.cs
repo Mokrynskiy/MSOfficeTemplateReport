@@ -8,12 +8,13 @@ namespace MSOfficeTemplateReport.Extensions
 {
     internal static class FileExtensions
     {
-        private static readonly byte[] DocxXlsxSignature = new byte[] { 0x50, 0x4B, 0x03, 0x04 };
+        internal static readonly byte[] DocxXlsxSignature = new byte[] { 0x50, 0x4B, 0x03, 0x04 };
 
-        public static FileFormat GetFormat(this byte[] data)
+        internal static string GetFormat(this byte[] data)
         {
             if (data.Length < DocxXlsxSignature.Length || !data.Take(DocxXlsxSignature.Length).SequenceEqual(DocxXlsxSignature))
-                return FileFormat.NotDefined;
+                return null;
+
             try
             {
                 using (var stream = new MemoryStream(data))
@@ -21,17 +22,17 @@ namespace MSOfficeTemplateReport.Extensions
                     using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
                     {
                         if (archive.GetEntry("word/document.xml") != null && archive.GetEntry("[Content_Types].xml") != null)
-                            return FileFormat.Docx;
+                            return FileFormates.Docx;
                         else if (archive.GetEntry("xl/workbook.xml") != null && archive.GetEntry("[Content_Types].xml") != null)
-                            return FileFormat.Xlsx;
+                            return FileFormates.Xlsx;
                         else
-                            return FileFormat.NotDefined;
+                            return null;
                     }
                 }
             }
             catch (Exception)
             {
-                return FileFormat.NotDefined;
+                return null;
             }
         }
     }

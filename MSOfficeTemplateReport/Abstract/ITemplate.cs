@@ -1,20 +1,22 @@
 ﻿using MSOfficeTemplateReport.Models;
-using System.Collections.Generic;
+using System.Text.Json.Nodes;
 
 namespace MSOfficeTemplateReport.Abstract
 {
     public interface ITemplate
     {
-        void AddVariable(string name, object data);
+        /// <summary>
+        /// Добавить переменную отчета
+        /// </summary>
+        /// <param name="name">Псевдоним</param>
+        /// <param name="variable">Object или Json</param>
+        void AddVariable(string name, object variable);
 
-        void AddVariables(Dictionary<string, object> variables);
-
-        void Generate();
-
-        GenerateResultModel Generate(string fileName);
-
-        string SaveAs(string path);
-
-        byte[] ToByteArray();
+        /// <summary>
+        /// Сгенерировать отчет
+        /// </summary>
+        /// <param name="fileName">Имя файла</param>
+        /// <returns></returns>
+        ReportResultModel Generate(string fileName = null);
     }
 }

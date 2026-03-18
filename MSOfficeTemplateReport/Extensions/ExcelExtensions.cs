@@ -1,74 +1,60 @@
 ﻿using ClosedXML.Excel;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace MSOfficeTemplateReport.Extensions
 {
-    public static class ExcelExtensions
+    internal static class ExcelExtensions
     {
-        public static XLCellValue ConvertToXLValue(this object obj)
+        internal static XLCellValue GetExcelValue(this JsonNode node, string fieldName)
         {
-            var type = obj.GetType().Name;
+            var field = node.AsObject().FirstOrDefault(x => x.Key == fieldName);
 
             XLCellValue value = new XLCellValue();
 
-            switch (type)
+            switch (field.Value.GetValueKind())
             {
-                case "Boolean":
-                    value = (bool)obj;
+                case JsonValueKind.String:
+
+                    if (DateTime.TryParse(field.Value.ToString(), out _))
+                    {
+                        value = DateTime.Parse(field.Value.ToString());
+                    }
+                    else
+                    {
+                        value = field.Value.ToString();
+                    }
+
                     break;
-                case "Byte":
-                    value = (byte)obj;
+
+                case JsonValueKind.Number:
+
+                    value = long.TryParse(field.Value.ToString(), out _) ? long.Parse(field.Value.ToString()) : double.Parse(field.Value.ToString().Replace('.', ','));
+
                     break;
-                case "SByte":
-                    value = (sbyte)obj;
+
+                case JsonValueKind.True:
+
+                    value = bool.Parse(field.Value.ToString());
+
                     break;
-                case "Int16":
-                    value = (short)obj;
+
+                case JsonValueKind.False:
+
+                    value = bool.Parse(field.Value.ToString());
+
                     break;
-                case "UInt16":
-                    value = (ushort)obj;
-                    break;
-                case "Int32":
-                    value = (int)obj;
-                    break;
-                case "UInt32":
-                    value = (uint)obj;
-                    break;
-                case "Int64":
-                    value = (long)obj;
-                    break;
-                case "UInt64":
-                    value = (ulong)obj;
-                    break;
-                case "Single":
-                    value = (float)obj;
-                    break;
-                case "Double":
-                    value = (double)obj;
-                    break;
-                case "Decimal":
-                    value = (decimal)obj;
-                    break;
-                case "Char":
-                    value = (char)obj;
-                    break;
-                case "String":
-                    value = (string)obj;
-                    break;
-                case "DateTime":
-                    value = (DateTime)obj;
-                    break;
-                case "TimeSpan":
-                    value = (TimeSpan)obj;
-                    break;
+
                 default:
-                    value = $"Не удалось преобразовать тип {obj.GetType().Name} к типу XLCellValue";
+
+                    value = "";
+
                     break;
             }
+
             return value;
         }
-
-    }
+    }    
 }

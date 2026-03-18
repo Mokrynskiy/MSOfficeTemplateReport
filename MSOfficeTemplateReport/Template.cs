@@ -1,93 +1,98 @@
 ﻿using MSOfficeTemplateReport.Abstract;
 using MSOfficeTemplateReport.ExcelReport;
 using MSOfficeTemplateReport.Extensions;
+using MSOfficeTemplateReport.Models;
 using MSOfficeTemplateReport.WordReport;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace MSOfficeTemplateReport
 {
     public static class Template
     {
-        public static ITemplate Create(byte[] byteArray)
+        internal static readonly Regex TagRegex = new Regex("[\\{]{2}(?!(Item))+[a-zA-Z]+[.]+[a-zA-Z]+[\\}]{2}");
+
+        internal static readonly Regex ItemRegex = new Regex ("[\\{]{2}Item+[.]+[a-zA-Z]+[\\}]{2}");
+
+        internal static readonly Regex SummaryRegex = new Regex("<<Sum>>");
+
+        internal static readonly Regex RowNumberRegex = new Regex("<<RowNumber>>");
+
+        public static ITemplate Create(string filePath, Dictionary<string, object> variables = null)
+        {
+            var byteArray = File.ReadAllBytes(filePath);
+
+            return Create(byteArray, variables);
+        }
+
+        public static ITemplate Create(byte[] byteArray, Dictionary<string, object> variables = null)
         {
             var format = byteArray.GetFormat();
 
-            switch (format)
-            {
-                case Models.FileFormat.NotDefined:
-                    throw new Exception("Формат файла шаблона не поддерживается");
-                case Models.FileFormat.Docx:
-                    return new WordTemplate(byteArray);
-                case Models.FileFormat.Xlsx:
-                    return new ExcelTemplate(byteArray);
-                default:
-                    throw new Exception("Формат файла шаблона не поддерживается");                    
-            }
-        }
+            if(format == null)
+                throw new Exception("Формат файла шаблона не поддерживается");
 
-        public static ITemplate Create(string templatePath)
-        {
-            var format = Path.GetExtension(templatePath);
+            Dictionary<string, JsonNode> jsonVariables = new Dictionary<string, JsonNode>();
+
+            if(variables != null)
+            {
+                foreach (var variable in variables)
+                {
+                    AddJsonVariable(ref jsonVariables, variable.Key, variable.Value);
+                }
+            }
 
             switch (format)
             {                
-                case ".docx":
-                    return new WordTemplate(templatePath);
-                case ".xlsx":
-                    return new ExcelTemplate(templatePath);
+                case FileFormates.Docx:
+                    return new WordTemplate(byteArray, jsonVariables);
+                    
+                case FileFormates.Xlsx:
+                    return new ExcelTemplate(byteArray, jsonVariables);
+                    
                 default:
                     throw new Exception("Формат файла шаблона не поддерживается");
-            }
+            }            
         }
-
-        public static ITemplate Create(byte[] byteArray, Dictionary<string, object> variables)
+        
+        internal static void AddJsonVariable(ref Dictionary<string, JsonNode> jsonVariables, string name, object variable)
         {
-            var format = byteArray.GetFormat();
+            var typeName = variable.GetType().Name;
 
-            ITemplate template;
+            var element = typeName == "JsonElement" ? variable
+                : typeName == "String" ? JsonElement.Parse(variable.ToString())
+                : JsonElement.Parse(JsonSerializer.Serialize(variable, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }));
 
-            switch (format)
+            var jObject = JsonNode.Parse(element?.ToString());
+
+            if (jObject?.GetValueKind() == JsonValueKind.Object)
             {
-                case Models.FileFormat.NotDefined:
-                    throw new Exception("Формат файла шаблона не поддерживается");
-                case Models.FileFormat.Docx:
-                    template = new WordTemplate(byteArray);
-                    break;
-                case Models.FileFormat.Xlsx:
-                    template =  new ExcelTemplate(byteArray);
-                    break;
-                default:
-                    throw new Exception("Формат файла шаблона не поддерживается");
+                foreach (var field in jObject.AsObject())
+                {
+                    if (field.Value?.GetValueKind() == JsonValueKind.Array)
+                    {
+                        if (jsonVariables.TryGetValue(field.Key, out _))
+                            continue;
+
+                        jsonVariables.Add(field.Key, JsonObject.Parse(field.Value?.ToString()));
+
+                        continue;
+                    }
+                }
+
+                jsonVariables.Add(name, jObject);
             }
-            
-            template.AddVariables(variables);
-
-            return template;
-        }
-
-        public static ITemplate Create(string templatePath, Dictionary<string, object> variables)
-        {
-            var format = Path.GetExtension(templatePath);
-
-            ITemplate template;
-
-            switch (format)
+            else if (jObject?.GetValueKind() == JsonValueKind.Array)
             {
-                case ".docx":
-                    template =  new WordTemplate(templatePath);
-                    break;
-                case ".xlsx":
-                    template =  new ExcelTemplate(templatePath);
-                    break;
-                default:
-                    throw new Exception("Формат файла шаблона не поддерживается");
+                if (jsonVariables.TryGetValue(name, out _))
+                    return;
+
+                jsonVariables.Add(name, jObject);
             }
-
-            template.AddVariables(variables);
-
-            return template;
         }
     }
 }
